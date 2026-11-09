@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#16122a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Lineup</title>
+<style>
+:root {
+  --bg: #16122a;
+  --bg2: #221a3f;
+  --surface: #261f45;
+  --surface2: #312857;
+  --line: #3e3468;
+  --text: #f5f1ff;
+  --muted: #a49cc8;
+  --accent: #ffb547;
+  --accent-ink: #2a1a00;
+  --good: #4ade80;
+  --bad: #ff5d6c;
+  --radius: 18px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: radial-gradient(120% 70% at 50% -10%, var(--bg2), var(--bg) 60%) fixed, var(--bg);
+  color: var(--text);
+  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-user-select: none; user-select: none;
+  overscroll-behavior: none;
+}
+#app {
+  max-width: 480px; margin: 0 auto; min-height: 100%;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 16px;
+}
+h1, h2, p { margin: 0; }
+h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.eyebrow { color: var(--accent); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .1em; }
+.spacer { flex: 1; }
+
+/* Buttons */
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
+button:disabled { opacity: .35; cursor: default; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.primary, .ghost {
+  min-height: 48px; padding: 0 18px; border-radius: 14px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  transition: transform .08s;
+}
+.primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px -8px var(--accent); }
+.ghost { border: 1.5px solid var(--line); background: var(--surface); }
+.primary:active:not(:disabled), .ghost:active:not(:disabled) { transform: scale(.97); }
+.big { width: 100%; min-height: 58px; font-size: 18px; }
+.sm { min-height: 40px; padding: 0 14px; font-size: 14px; border-radius: 12px; }
+.link { color: var(--muted); text-decoration: underline; padding: 8px; align-self: center; }
+.icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 18px; color: var(--muted); }
+.icon:active { background: var(--surface2); }
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; }
+
+/* Panels */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Setup */
+.setup-top { display: flex; justify-content: flex-end; }
+.brand { text-align: center; padding: 8px 0 4px; }
+.brand h1 { font-size: 44px; letter-spacing: -.02em; font-weight: 900; }
+.brand h1 span { color: var(--accent); }
+.fan { display: flex; justify-content: center; height: 86px; margin-bottom: 10px; }
+.fan .card { margin: 0 -10px; }
+.fan .card:nth-child(1) { transform: rotate(-14deg) translateY(10px); }
+.fan .card:nth-child(3) { transform: rotate(14deg) translateY(10px); }
+.prow { display: flex; gap: 8px; align-items: center; }
+.prow .num { width: 22px; color: var(--muted); font-size: 14px; text-align: right; }
+.pname, .field {
+  flex: 1; min-width: 0; height: 46px; border-radius: 12px; border: 1.5px solid var(--line);
+  background: var(--bg); color: var(--text); font: inherit; padding: 0 14px; -webkit-user-select: text; user-select: text;
+}
+.field { width: 100%; height: 48px; }
+.pname:focus, .field:focus { outline: none; border-color: var(--accent); }
+
+/* Language switch */
+.lang { display: flex; align-self: center; background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 3px; }
+.lang button { min-height: 34px; padding: 0 14px; border-radius: 99px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.lang button.on { background: var(--accent); color: var(--accent-ink); }
+
+/* Topbar */
+.topbar { display: flex; justify-content: flex-end; margin-bottom: -8px; }
+
+/* Theme */
+.theme-card {
+  background: linear-gradient(160deg, var(--surface2), var(--surface));
+  border: 1px solid var(--line); border-radius: 24px; padding: 28px 20px 22px;
+  display: flex; flex-direction: column; gap: 24px; text-align: center;
+  box-shadow: 0 20px 40px -20px #000a;
+}
+.theme-t { font-size: 27px; font-weight: 800; line-height: 1.2; text-wrap: balance; }
+.scale .bar { height: 10px; border-radius: 99px; background: linear-gradient(90deg, hsl(210 80% 58%), hsl(150 65% 50%), hsl(55 90% 55%), hsl(0 80% 58%)); }
+.scale .ends { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; text-align: left; }
+.scale .ends > div { max-width: 48%; display: flex; flex-direction: column; }
+.scale .ends .r { text-align: right; }
+.scale b { font-size: 20px; font-weight: 900; }
+.scale span { color: var(--muted); font-size: 14px; line-height: 1.25; }
+.theme-mini { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; }
+.theme-mini .t { font-weight: 800; font-size: 18px; line-height: 1.25; }
+.theme-mini .scale b { font-size: 15px; }
+.theme-mini .scale span { font-size: 13px; }
+.theme-mini .scale .bar { height: 6px; }
+
+/* Cards */
+.card {
+  --h: 30;
+  width: 62px; height: 86px; border-radius: 12px; flex: none;
+  display: flex; align-items: center; justify-content: center; position: relative;
+  line-height: 1; text-align: center; letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+  padding: 0; overflow: hidden;
+  background: linear-gradient(160deg, hsl(var(--h) 85% 62%), hsl(var(--h) 75% 42%));
+  box-shadow: 0 8px 18px -8px #000c, inset 0 0 0 2px #ffffff30;
+  color: #fff; font-weight: 900; font-size: 28px; text-shadow: 0 2px 6px #0005;
+}
+.card::after { content: ""; position: absolute; inset: 5px; border-radius: 8px; border: 1.5px solid #ffffff45; }
+.card.back { background: repeating-linear-gradient(45deg, #3b2f6e 0 8px, #45387e 8px 16px); }
+.card.back::before { content: "?"; color: #ffffff60; font-size: 28px; }
+.card.big { width: 130px; height: 180px; border-radius: 20px; font-size: 64px; }
+.card.big::after { inset: 9px; border-radius: 13px; }
+.card.big.back::before { font-size: 54px; }
+.card.sm { width: 44px; height: 60px; border-radius: 9px; font-size: 20px; }
+.card.sm::after { inset: 4px; border-radius: 6px; }
+.card.bad { box-shadow: 0 0 0 3px var(--bad), 0 8px 18px -8px #000c; }
+
+/* Deal */
+.handoff { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; padding: 12px 0; }
+.who { font-size: 42px; font-weight: 900; word-break: break-word; }
+.hand { display: flex; justify-content: center; margin: 8px 0; }
+.hand .card:not(.back) { animation: flipIn .5s cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes flipIn { from { transform: rotateY(90deg) scale(.8); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Table / play */
+.table { background: #0d0a1e80; border: 1px dashed var(--line); border-radius: var(--radius); padding: 12px; min-height: 98px; }
+.pile { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.pile::-webkit-scrollbar { display: none; }
+.pile.wrap { flex-wrap: wrap; overflow: visible; justify-content: center; }
+.pc { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 50px; flex: none; }
+.pc small { font-size: 11px; color: var(--muted); max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc.new .card { animation: flipIn .5s both; }
+.players { display: flex; flex-direction: column; gap: 8px; }
+.pl { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 10px 10px 10px 14px; min-height: 62px; }
+.pl-name { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl.done { opacity: .45; }
+
+/* Theme list */
+[hidden] { display: none !important; }
+.tl-head { display: flex; align-items: center; gap: 12px; }
+.tlist { display: flex; flex-direction: column; gap: 6px; }
+.trow {
+  text-align: left; background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 3px;
+}
+.trow b { font-weight: 700; line-height: 1.3; }
+.trow span { color: var(--muted); font-size: 13px; }
+.trow.on { border-color: var(--accent); }
+.trow:active { background: var(--surface2); }
+
+/* Lineup: drag face-down cards into order, then flip top to bottom */
+.hint { color: var(--muted); font-size: 14px; text-align: center; }
+.end-label { display: flex; gap: 8px; align-items: baseline; color: var(--muted); font-size: 13px; padding: 0 6px; }
+.end-label b { color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; }
+.lineup { display: flex; flex-direction: column; gap: 6px; }
+.arow {
+  display: flex; align-items: center; gap: 12px; position: relative;
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 16px;
+  padding: 7px 10px 7px 12px;
+}
+.arow .pos { width: 18px; text-align: right; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.arow .nm { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arow .card.sm { width: 38px; height: 52px; font-size: 18px; }
+.arow .grip { color: var(--muted); font-size: 22px; line-height: 1; padding: 0 2px; }
+.arranging .arow { touch-action: none; cursor: grab; }
+.arow.lifted { z-index: 5; background: var(--surface2); border-color: var(--accent); box-shadow: 0 14px 30px -10px #000c; cursor: grabbing; }
+.arow.next { border-color: var(--accent); cursor: pointer; }
+.arow .mark { width: 24px; text-align: center; font-weight: 900; font-size: 18px; }
+.mark.ok { color: var(--good); }
+.mark.no { color: var(--bad); }
+.arow.fresh .card { animation: flipIn .5s both; }
+/* 3-digit numbers (100) get a smaller size so they stay inside the inner frame */
+.card.n3 { font-size: 23px; }
+.card.big.n3 { font-size: 50px; }
+.card.sm.n3 { font-size: 16px; }
+.arow .card.sm.n3 { font-size: 14px; }
+.arow.fresh .mark { animation: fade .3s .4s both; }
+
+/* Results */
+.result { text-align: center; display: flex; flex-direction: column; gap: 8px; align-items: center; padding: 16px 0 4px; }
+.result .emoji { font-size: 64px; line-height: 1; animation: pop .6s cubic-bezier(.2,.9,.3,1.4) both; }
+.result h1 { font-size: 34px; font-weight: 900; }
+@keyframes pop { from { transform: scale(.3); opacity: 0; } to { transform: none; opacity: 1; } }
+.section-label { color: var(--muted); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; text-align: center; margin: 4px 0 8px; }
+
+/* Modal */
+#modal:empty { display: none; }
+.backdrop {
+  position: fixed; inset: 0; background: #07051099; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: flex-end; justify-content: center; z-index: 10; animation: fade .2s both;
+}
+.sheet {
+  width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line); border-bottom: 0;
+  border-radius: 26px 26px 0 0; padding: 22px 18px max(20px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 14px; animation: up .28s cubic-bezier(.2,.9,.3,1) both;
+}
+.sheet.center { text-align: center; }
+.sheet h3 { margin: 0; font-size: 22px; }
+.sheet .stack { display: flex; flex-direction: column; gap: 10px; }
+.sheet ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; color: #ddd6f5; }
+label.f { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); font-weight: 600; }
+@keyframes fade { from { opacity: 0; } }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } }
+
+.flip { display: flex; justify-content: center; perspective: 800px; margin: 6px 0; }
+.flip .card { animation: bigFlip .8s cubic-bezier(.2,.8,.3,1.1) both; }
+@keyframes bigFlip {
+  0% { transform: rotateY(180deg) scale(.7); filter: brightness(0); }
+  50% { filter: brightness(0); }
+  51% { filter: none; }
+  100% { transform: none; }
+}
+.verdict { font-size: 22px; font-weight: 900; animation: fade .3s .85s both; }
+.verdict.ok { color: var(--good); }
+.verdict.no { color: var(--bad); }
+.later { animation: fade .3s .9s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01s !important; animation-delay: 0s !important; }
+}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div id="modal"></div>
+<script>
+'use strict';
+
+// ---------- Themes: [EN prompt, EN 1, EN 100, PT prompt, PT 1, PT 100] ----------
+const THEMES = [
+  ['How much you would want it as a pet', 'Absolutely not', 'Dream pet', 'Quanto você gostaria de ter como pet', 'De jeito nenhum', 'Pet dos sonhos'],
+  ['Foods, by how messy they are to eat', 'Spotless', 'Total disaster', 'Comidas, pela sujeira que fazem ao comer', 'Zero sujeira', 'Desastre total'],
+  ['Superpowers, by how useful on a Monday morning', 'Useless', 'Life-changing', 'Superpoderes, pela utilidade numa segunda de manhã', 'Inútil', 'Muda a vida'],
+  ['Things, by how loud they are', 'Silent', 'Deafening', 'Coisas, pelo barulho que fazem', 'Silêncio', 'Ensurdecedor'],
+  ['Places, by how relaxing they are', 'Pure stress', 'Total zen', 'Lugares, pelo quão relaxantes são', 'Puro estresse', 'Zen total'],
+  ['Jobs, by how stressful they are', 'Chill', 'Nightmare', 'Profissões, pelo estresse', 'Tranquila', 'Pesadelo'],
+  ['Smells, by how pleasant they are', 'Disgusting', 'Heavenly', 'Cheiros, pelo quão agradáveis são', 'Nojento', 'Divino'],
+  ['Movies, by how hard they make you cry', 'Dry eyes', 'Sobbing', 'Filmes, pelo quanto fazem chorar', 'Olho seco', 'Aos prantos'],
+  ['Excuses for being late, by how believable', 'Nobody buys it', 'Totally convincing', 'Desculpas para atraso, pela credibilidade', 'Ninguém acredita', 'Totalmente convincente'],
+  ['Breakfast foods, by how good they are', 'Sad', 'Perfect morning', 'Cafés da manhã, pelo quão bons são', 'Triste', 'Manhã perfeita'],
+  ['Animals, by how dangerous to fight bare-handed', 'Easy win', 'Certain doom', 'Animais, pelo perigo de enfrentar no braço', 'Vitória fácil', 'Morte certa'],
+  ['Things, by how heavy they are', 'Feather', 'Immovable', 'Coisas, pelo peso', 'Pena', 'Impossível de mover'],
+  ['Sports, by how exhausting they are', 'Barely moving', 'Completely drained', 'Esportes, pelo cansaço', 'Mal se mexe', 'Exausto'],
+  ['Fictional villains, by how evil they are', 'Kinda misunderstood', 'Pure evil', 'Vilões da ficção, pela maldade', 'Meio incompreendido', 'Puro mal'],
+  ['Things, by how expensive they are', 'Free', 'Unaffordable', 'Coisas, pelo preço', 'De graça', 'Impagável'],
+  ['Costumes, by how scary they are', 'Adorable', 'Nightmare fuel', 'Fantasias, pelo medo que dão', 'Fofa', 'Pesadelo'],
+  ['Trips, by how much you would want to go', 'Hard pass', 'Book it now', 'Viagens, pela vontade de ir', 'Dispenso', 'Compra agora'],
+  ['Words, by how fun they are to say', 'Boring', 'Delightful', 'Palavras, pelo quão divertidas de falar', 'Sem graça', 'Deliciosa'],
+  ['Things, by how old they are', 'Brand new', 'Ancient', 'Coisas, pela idade', 'Novinho', 'Antiquíssimo'],
+  ['Snacks, by how addictive they are', 'One is enough', 'Can\'t stop', 'Petiscos, pelo quão viciantes são', 'Um basta', 'Não consigo parar'],
+  ['Hobbies, by how nerdy they are', 'Not at all', 'Ultimate nerd', 'Hobbies, pelo quão nerds são', 'Nada nerd', 'Nerd supremo'],
+  ['Things, by how sticky they are', 'Slippery', 'Glued forever', 'Coisas, pelo quão grudentas são', 'Escorregadio', 'Colado pra sempre'],
+  ['Instruments, by how annoying for the neighbors', 'Pleasant', 'Unbearable', 'Instrumentos, pelo incômodo aos vizinhos', 'Agradável', 'Insuportável'],
+  ['Gifts, by how happy you would be to get one', 'Disappointed', 'Overjoyed', 'Presentes, pela felicidade de ganhar', 'Decepção', 'Euforia'],
+  ['Things kids are afraid of, by how scary', 'A little uneasy', 'Screaming', 'Medos de criança, pelo quão assustadores', 'Um pouco de receio', 'Gritaria'],
+  ['Things, by how fast they are', 'Snail pace', 'Lightning', 'Coisas, pela velocidade', 'Lesma', 'Relâmpago'],
+  ['Life skills, by how important they are', 'Optional', 'Essential', 'Habilidades da vida, pela importância', 'Opcional', 'Essencial'],
+  ['Weather, by how much you enjoy it', 'Miserable', 'Perfect day', 'Climas, pelo quanto você curte', 'Horrível', 'Dia perfeito'],
+  ['Things, by how hot they are (temperature)', 'Frozen', 'Scorching', 'Coisas, pela temperatura', 'Congelado', 'Escaldante'],
+  ['Foods, by how spicy they are', 'Mild', 'Fire', 'Comidas, pela ardência', 'Suave', 'Fogo'],
+  ['First date ideas, by how good they are', 'Disaster', 'Unforgettable', 'Programas de primeiro encontro, pelo quão bons', 'Desastre', 'Inesquecível'],
+  ['Things, by how useful in a zombie apocalypse', 'Useless', 'Lifesaver', 'Coisas, pela utilidade num apocalipse zumbi', 'Inútil', 'Salva-vidas'],
+  ['Chores, by how much you hate them', 'Kinda fun', 'Pure torture', 'Tarefas de casa, pelo ódio que você tem', 'Até divertida', 'Pura tortura'],
+  ['Things, by how rare they are', 'Everywhere', 'One of a kind', 'Coisas, pela raridade', 'Em todo lugar', 'Única no mundo'],
+  ['Things, by how big they are', 'Tiny', 'Gigantic', 'Coisas, pelo tamanho', 'Minúsculo', 'Gigantesco'],
+  ['People or things, by how famous they are', 'Nobody knows', 'Everyone knows', 'Pessoas ou coisas, pela fama', 'Ninguém conhece', 'Todo mundo conhece'],
+  ['Pizza toppings, by how good they are', 'Crime', 'Perfection', 'Sabores de pizza, pelo quão bons são', 'Crime', 'Perfeição'],
+  ['Things falling on your head, by how much it hurts', 'Didn\'t notice', 'Hospital', 'Coisas caindo na sua cabeça, pela dor', 'Nem senti', 'Hospital'],
+  ['Dance moves, by how embarrassing', 'Smooth', 'Mortifying', 'Passos de dança, pela vergonha', 'Estiloso', 'Vergonha alheia'],
+  ['Things, by how soft they are', 'Rock hard', 'Cloud-like', 'Coisas, pela maciez', 'Duro feito pedra', 'Uma nuvem'],
+  ['Drinks, by how refreshing they are', 'Makes you thirstier', 'Pure refreshment', 'Bebidas, pelo quão refrescantes são', 'Dá mais sede', 'Refresco puro'],
+  ['Ways to travel, by how comfortable', 'Torture', 'Luxury', 'Meios de transporte, pelo conforto', 'Tortura', 'Luxo'],
+  ['Things, by how much a toddler would love them', 'Bored', 'Obsessed', 'Coisas, pelo quanto uma criancinha amaria', 'Tédio', 'Obcecada'],
+  ['Activities, by how dangerous they are', 'Totally safe', 'Deadly', 'Atividades, pelo perigo', 'Totalmente seguro', 'Mortal'],
+  ['Foods, by how sweet they are', 'Not sweet', 'Sugar overload', 'Comidas, pelo quão doces são', 'Nada doce', 'Overdose de açúcar'],
+  ['Phone notifications, by how urgent', 'Ignore it', 'Drop everything', 'Notificações do celular, pela urgência', 'Ignora', 'Larga tudo'],
+  ['Skills, by how hard they are to learn', 'Five minutes', 'A lifetime', 'Habilidades, pela dificuldade de aprender', 'Cinco minutos', 'Uma vida inteira'],
+  ['Things, by how much grandma would approve', 'Shocked', 'Proud', 'Coisas, pelo quanto a vovó aprovaria', 'Chocada', 'Orgulhosa'],
+  ['Things, by how smelly they are', 'Odorless', 'Clear the room', 'Coisas, pelo fedor', 'Sem cheiro', 'Esvazia a sala'],
+  ['Sounds, by how satisfying they are', 'Grating', 'Pure bliss', 'Sons, pelo quão satisfatórios são', 'Irritante', 'Êxtase'],
+  ['Things, by how long they last', 'A second', 'Forever', 'Coisas, pela duração', 'Um segundo', 'Para sempre'],
+  ['Things to happen at a wedding, by how bad', 'No big deal', 'Catastrophe', 'Coisas que acontecem num casamento, pela gravidade', 'Tranquilo', 'Catástrofe'],
+  ['Creatures, by how strong they are', 'Weakling', 'Unstoppable', 'Criaturas, pela força', 'Fracote', 'Imparável'],
+  ['Things, by how fragile they are', 'Indestructible', 'Breaks if you look at it', 'Coisas, pela fragilidade', 'Indestrutível', 'Quebra só de olhar'],
+  ['Things to find in your fridge, by how weird', 'Normal', 'Call someone', 'Coisas na sua geladeira, pela estranheza', 'Normal', 'Chama alguém'],
+  ['Pet names, by how cool they are', 'Lame', 'Legendary', 'Nomes de pet, pelo quão legais são', 'Sem graça', 'Lendário'],
+  ['Things, by how much a cat would want them', 'Ignores it', 'Must have', 'Coisas, pelo quanto um gato iria querer', 'Ignora', 'Precisa ter'],
+  ['Jobs, by how cool they sound at a party', 'Conversation killer', 'Everyone listens', 'Profissões, pelo quão legais soam numa festa', 'Mata a conversa', 'Todos escutam'],
+  ['Things, by how hard to carry up the stairs', 'Easy', 'Impossible', 'Coisas, pela dificuldade de carregar escada acima', 'Fácil', 'Impossível'],
+  ['Things, by how much they help you sleep', 'Wide awake', 'Out cold', 'Coisas, pelo quanto ajudam a dormir', 'Bem acordado', 'Apagado'],
+  ['Things to say at a job interview, by how bad', 'Smart move', 'Instant rejection', 'Frases numa entrevista de emprego, pelo quão ruins', 'Boa jogada', 'Reprovado na hora'],
+  ['Desserts, by how much you would fight for the last bite', 'Take it', 'Fight to the death', 'Sobremesas, pelo quanto você brigaria pelo último pedaço', 'Pode pegar', 'Briga até a morte'],
+  ['Famous characters, by how good a roommate they would be', 'Move out', 'Best roommate ever', 'Personagens famosos, pelo quão bons como colegas de quarto', 'Me mudo', 'Melhor colega'],
+  ['Things, by how popular they were when you were a kid', 'Nobody cared', 'Everyone had one', 'Coisas, pela popularidade na sua infância', 'Ninguém ligava', 'Todo mundo tinha'],
+  ['Things, by how long you could go without them', 'Never needed', 'Can\'t live without', 'Coisas, pelo quanto você precisa delas', 'Nem preciso', 'Não vivo sem'],
+  ['Places, by how crowded they are', 'Empty', 'Packed', 'Lugares, pela lotação', 'Vazio', 'Lotado'],
+  ['Things, by how shiny they are', 'Dull', 'Blinding', 'Coisas, pelo brilho', 'Opaco', 'Cegante'],
+  ['Inventions, by how much the world needs them', 'Pointless', 'Essential', 'Invenções, pelo quanto o mundo precisa delas', 'Inútil', 'Essencial'],
+  ['Things to do on a Sunday, by how lazy', 'Productive', 'Never left bed', 'Programas de domingo, pela preguiça', 'Produtivo', 'Nem saí da cama'],
+  ['Fruits and vegetables, by how much you like them', 'Gross', 'Favorite', 'Frutas e verduras, pelo quanto você gosta', 'Eca', 'Favorita'],
+  ['Talents, by how impressive they are', 'Meh', 'Jaw-dropping', 'Talentos, pelo quão impressionantes são', 'Mais ou menos', 'De cair o queixo'],
+  ['Ways to spend a million, by how smart', 'Reckless', 'Genius', 'Jeitos de gastar um milhão, pela inteligência', 'Irresponsável', 'Genial'],
+  ['Things, by how creepy they are', 'Cozy', 'Deeply unsettling', 'Coisas, pelo quão sinistras são', 'Aconchegante', 'Perturbador'],
+  ['Songs or music styles, by how much they make you dance', 'Stand still', 'Can\'t stop moving', 'Músicas ou estilos, pelo quanto fazem dançar', 'Fico parado', 'Não consigo parar'],
+  ['Things, by how hard they are to clean', 'Wipe and done', 'Throw it away', 'Coisas, pela dificuldade de limpar', 'Passa pano e pronto', 'Joga fora'],
+  ['Places, by how cold they are', 'Tropical', 'Frozen solid', 'Lugares, pelo frio', 'Tropical', 'Congelante'],
+  ['Superheroes, by how useful in real life', 'Useless', 'Saves the day', 'Super-heróis, pela utilidade na vida real', 'Inútil', 'Salva o dia'],
+  ['Things, by how much you want them at a party', 'Leave it home', 'Party essential', 'Coisas, pelo quanto você quer numa festa', 'Deixa em casa', 'Indispensável'],
+  ['Animals, by how cute they are', 'Not cute', 'Unbearably cute', 'Animais, pela fofura', 'Nada fofo', 'Fofo demais'],
+  ['Foods you would eat every day on a desert island', 'Never', 'Every single day', 'Comidas para comer todo dia numa ilha deserta', 'Nunca', 'Todo santo dia'],
+  ['Things, by how scary they are in the dark', 'Comforting', 'Terrifying', 'Coisas, pelo medo que dão no escuro', 'Reconfortante', 'Aterrorizante'],
+  ['Jobs, by how much you would want to do them', 'No way', 'Dream job', 'Profissões, pela vontade de exercer', 'Jamais', 'Emprego dos sonhos'],
+  ['Places, by how romantic they are', 'Mood killer', 'Pure romance', 'Lugares, pelo romantismo', 'Clima zero', 'Puro romance'],
+  ['Things, by how useful at school', 'Useless', 'Can\'t study without it', 'Coisas, pela utilidade na escola', 'Inútil', 'Não estudo sem'],
+  ['Superpowers, by how cool they are', 'Lame', 'Awesome', 'Superpoderes, pelo quão legais são', 'Sem graça', 'Incrível'],
+  ['Things to take camping, by how useful', 'Dead weight', 'Must bring', 'Coisas para levar num acampamento, pela utilidade', 'Peso morto', 'Obrigatório'],
+  ['Foods, by how good they are cold', 'Inedible', 'Even better cold', 'Comidas, pelo quão boas são frias', 'Intragável', 'Melhor ainda fria'],
+  ['Movies or shows, by how scary they are', 'Cozy', 'Can\'t sleep', 'Filmes ou séries, pelo medo', 'Aconchegante', 'Não durmo'],
+  ['Things, by how well they survive a fall', 'Shatters', 'Not a scratch', 'Coisas, pela resistência a uma queda', 'Se espatifa', 'Nem um arranhão'],
+  ['Animals, by how big they are', 'Microscopic', 'Enormous', 'Animais, pelo tamanho', 'Microscópico', 'Enorme'],
+  ['Things you would miss most on a trip', 'Wouldn\'t notice', 'Turn back for it', 'Coisas que você mais sentiria falta numa viagem', 'Nem perceberia', 'Volto pra buscar'],
+  ['Habits, by how annoying they are', 'Fine by me', 'Drives me crazy', 'Manias, pelo quão irritantes são', 'Tranquilo', 'Me tira do sério'],
+  ['Foods, by how healthy they are', 'Junk', 'Super healthy', 'Comidas, pelo quão saudáveis são', 'Porcaria', 'Supersaudável'],
+  ['Things, by how popular they are with teenagers', 'Cringe', 'Everyone wants it', 'Coisas, pela popularidade entre adolescentes', 'Vergonha', 'Todos querem'],
+  ['Weapons against a monster, by how effective', 'Useless', 'Instant win', 'Armas contra um monstro, pela eficácia', 'Inútil', 'Vitória certa'],
+  ['Things, by how much you want to have at home', 'Keep it away', 'Want it now', 'Coisas, pelo quanto você quer ter em casa', 'Longe de mim', 'Quero já'],
+  ['Sports, by how fun they are to watch', 'Snooze', 'Edge of my seat', 'Esportes, pela graça de assistir', 'Dá sono', 'Grudado na tela'],
+  ['Things, by how hard to explain to a child', 'Easy', 'Impossible', 'Coisas, pela dificuldade de explicar a uma criança', 'Fácil', 'Impossível'],
+  ['Things, by how weird they are as a gift', 'Normal gift', 'Very strange', 'Coisas, pela estranheza como presente', 'Presente normal', 'Estranhíssimo'],
+  ['Famous people or characters, by how strong', 'Weak', 'Unbeatable', 'Famosos ou personagens, pela força', 'Fraco', 'Imbatível'],
+  ['Things, by how much they make you laugh', 'Not funny', 'Crying laughing', 'Coisas, pelo quanto fazem rir', 'Sem graça', 'Chorando de rir'],
+  ['Things, by how nice they are to hug', 'Prickly', 'Perfect hug', 'Coisas, pelo quão gostosas de abraçar', 'Espinhento', 'Abraço perfeito'],
+  ['Things, by how important to survive', 'Unnecessary', 'Vital', 'Coisas, pela importância para sobreviver', 'Desnecessário', 'Vital'],
+  ['Foods, by how crunchy they are', 'Mushy', 'Super crunchy', 'Comidas, pela crocância', 'Molenga', 'Supercrocante'],
+  ['Places, by how scary they are at night', 'Peaceful', 'Run away', 'Lugares, pelo medo à noite', 'Tranquilo', 'Sai correndo'],
+  ['Things, by how embarrassing to get caught doing', 'No shame', 'Want to disappear', 'Coisas, pela vergonha de ser pego fazendo', 'Nem ligo', 'Quero sumir'],
+  ['Animals, by how smart they are', 'Clueless', 'Genius', 'Animais, pela inteligência', 'Sem noção', 'Gênio'],
+  ['Things, by how long they take to make', 'Instant', 'Years', 'Coisas, pelo tempo que levam para ficar prontas', 'Instantâneo', 'Anos'],
+  ['Things, by how satisfying to pop or break', 'Meh', 'So satisfying', 'Coisas, pela satisfação de estourar ou quebrar', 'Nada', 'Satisfatório demais'],
+  ['Inventions, by how much they changed the world', 'Gimmick', 'Changed everything', 'Invenções, pelo quanto mudaram o mundo', 'Bobagem', 'Mudou tudo'],
+  ['Things, by how much a dog would love them', 'Ignores it', 'Pure joy', 'Coisas, pelo quanto um cachorro amaria', 'Ignora', 'Alegria pura'],
+  ['Things, by how hard they are to give up', 'Easy', 'Impossible', 'Coisas, pela dificuldade de largar', 'Fácil', 'Impossível'],
+  ['Things, by how useful on a rainy day', 'Useless', 'Lifesaver', 'Coisas, pela utilidade num dia de chuva', 'Inútil', 'Salva-vidas'],
+  ['Topics, by how long you could talk about them', 'Five seconds', 'All night', 'Assuntos, pelo tempo que você falaria deles', 'Cinco segundos', 'A noite toda'],
+  ['Kinds of people, by how good they are on a team', 'Slows us down', 'Star player', 'Tipos de pessoa, pela utilidade num time', 'Atrapalha', 'Craque'],
+  ['Things, by how valuable in a schoolyard trade', 'Worthless', 'Treasure', 'Coisas, pelo valor numa troca no recreio', 'Não vale nada', 'Tesouro'],
+  ['Things, by how bad to step on barefoot', 'Nice', 'Agony', 'Coisas, pela dor de pisar descalço', 'Gostoso', 'Agonia'],
+  ['Ways to wake up, by how pleasant', 'Awful', 'Perfect', 'Jeitos de acordar, pelo quão agradáveis', 'Horrível', 'Perfeito'],
+  ['Foods, by how good they smell while cooking', 'Bad', 'Irresistible', 'Comidas, pelo cheiro enquanto cozinham', 'Ruim', 'Irresistível'],
+  ['Things, by how useful to win a war', 'Useless', 'Decisive', 'Coisas, pela utilidade para vencer uma guerra', 'Inútil', 'Decisivo'],
+  ['Things you would want to be reincarnated as', 'Never', 'Sign me up', 'Coisas em que você gostaria de reencarnar', 'Nunca', 'Quero muito'],
+  ['Things, by how excited kids get about them', 'Shrug', 'Screaming', 'Coisas, pela empolgação das crianças', 'Indiferentes', 'Gritando'],
+  ['Words, by how good they are as a band name', 'Terrible', 'Iconic', 'Palavras, pelo quão boas como nome de banda', 'Péssimo', 'Icônico'],
+  ['Things, by how expensive to maintain', 'Free', 'Bankrupting', 'Coisas, pelo custo de manter', 'De graça', 'Falência'],
+  ['Things, by how hard they are to draw', 'Stick figure', 'Masters only', 'Coisas, pela dificuldade de desenhar', 'Palitinho', 'Só um mestre'],
+  ['Foods, by how tasty they look', 'Gross', 'Mouth-watering', 'Comidas, pela aparência', 'Nojenta', 'De dar água na boca'],
+  ['Things, by how fun they are in a pool', 'Boring', 'Best day ever', 'Coisas, pela diversão na piscina', 'Chato', 'Melhor dia'],
+  ['Things in a haunted house, by how scary', 'Harmless', 'Run', 'Coisas numa casa mal-assombrada, pelo medo', 'Inofensivo', 'Corre'],
+  ['Places, by how expensive to live in', 'Cheap', 'Millionaires only', 'Lugares, pelo custo de vida', 'Barato', 'Só milionários'],
+  ['Things, by how hard to keep secret', 'Easy', 'Impossible', 'Coisas, pela dificuldade de guardar segredo', 'Fácil', 'Impossível'],
+  ['Things, by how sad it is to lose them', 'Who cares', 'Heartbroken', 'Coisas, pela tristeza de perder', 'Tanto faz', 'Coração partido'],
+  ['Animals, by how fast they are', 'Slowpoke', 'A blur', 'Animais, pela velocidade', 'Lerdo', 'Um raio'],
+  ['Things, by how good they are for a picnic', 'Ruins it', 'Perfect', 'Coisas, pelo quanto combinam com um piquenique', 'Estraga', 'Perfeito'],
+  ['Things, by how much your parents would hate them', 'Approved', 'Grounded', 'Coisas, pelo quanto seus pais odiariam', 'Aprovado', 'De castigo'],
+  ['Things, by how dangerous to touch', 'Safe', 'Don\'t even think', 'Coisas, pelo perigo de tocar', 'Seguro', 'Nem pense'],
+  ['Things, by how hard they are to wait for', 'Easy', 'Unbearable', 'Coisas, pela ansiedade da espera', 'Tranquilo', 'Insuportável'],
+  ['Things, by how good they are at 3 a.m.', 'Terrible idea', 'Perfect', 'Coisas, pelo quão boas às 3 da manhã', 'Péssima ideia', 'Perfeito'],
+  ['Things, by how mysterious they are', 'Obvious', 'Unsolved', 'Coisas, pelo mistério', 'Óbvio', 'Sem explicação'],
+  ['Things, by how colorful they are', 'Gray', 'Rainbow', 'Coisas, pelo colorido', 'Cinza', 'Arco-íris'],
+  ['Animals, by how gross they are', 'Lovely', 'Yuck', 'Animais, pelo nojo', 'Adorável', 'Eca'],
+  ['Things, by how sharp they are', 'Blunt', 'Razor', 'Coisas, pelo quão afiadas são', 'Cego', 'Navalha'],
+  ['Words, by how hard they are to pronounce', 'Easy', 'Tongue twister', 'Palavras, pela dificuldade de pronunciar', 'Fácil', 'Trava-língua'],
+  ['Things, by how wet they are', 'Bone dry', 'Soaked', 'Coisas, pela umidade', 'Seco', 'Encharcado'],
+  ['Moments, by how awkward they are', 'Smooth', 'Painfully awkward', 'Momentos, pelo constrangimento', 'Tranquilo', 'Constrangedor'],
+  ['Things, by how essential in a kitchen', 'Optional', 'Can\'t cook without', 'Coisas, pela importância na cozinha', 'Opcional', 'Não cozinho sem'],
+  ['Things, by how nostalgic they make you', 'Nothing', 'Childhood', 'Coisas, pela nostalgia', 'Nada', 'Infância'],
+  ['Places, by how far you would travel to see them', 'Not even next door', 'Other side of the world', 'Lugares, pela distância que você viajaria para ver', 'Nem na esquina', 'Outro lado do mundo'],
+  ['Things, by how useful on your first day at a new job', 'Useless', 'Lifesaver', 'Coisas, pela utilidade no primeiro dia de trabalho', 'Inútil', 'Salva-vidas'],
+  ['Monsters, by how scary they are', 'Cute', 'Nightmares', 'Monstros, pelo medo', 'Fofo', 'Pesadelo'],
+  ['Things, by how good they are as a pillow', 'Rock', 'Cloud', 'Coisas, pelo quão boas como travesseiro', 'Pedra', 'Nuvem'],
+  ['Shows or events, by how much you would pay to see live', 'Only if free', 'Any price', 'Shows ou eventos, pelo quanto você pagaria para ver', 'Só de graça', 'Qualquer preço'],
+  ['Things, by how much attention they need', 'Leave it alone', 'Around the clock', 'Coisas, pela atenção que exigem', 'Esquece', '24 horas'],
+];
+
+// ---------- Translations ----------
+const STR = {
+  en: {
+    players: 'Players', playerN: n => `Player ${n}`, removePlayer: 'Remove player', addPlayer: '+ Add player',
+    start: 'Start', howTo: 'How to play', menu: 'Menu', language: 'Language',
+    another: '↻ Another', ourOwn: '✎ Our own', deal: 'Deal',
+    allThemes: 'All themes', seeAll: n => `See all ${n} themes`, search: 'Search themes', back: '← Back',
+    passTo: 'Pass the phone to', lookAway: 'Everyone else, look away',
+    imName: n => `I'm ${n}, show me`, gotIt: 'Got it, hide it',
+    peek: 'Peek', dragHint: 'Drag the cards into order', startFlip: 'Start flipping', flipNext: 'Flip next',
+    perfect: 'Perfect order!', notQuite: n => `${n} out of order`,
+    playAgain: 'Play again', editPlayers: 'Edit players',
+    customTitle: 'Your own theme', themeLbl: 'Theme', themePh: 'e.g. Movies, by how good they are',
+    oneMeans: '1 means…', loPh: 'Terrible', hundredMeans: '100 means…', hiPh: 'Masterpiece',
+    lowest: 'Lowest', highest: 'Highest', cancel: 'Cancel', useIt: 'Use it',
+    peekTitle: n => `Only ${n} should look`, show: 'Show', hide: 'Hide',
+    newRound: 'New round', close: 'Close', gotItBtn: 'Got it',
+    rules: `<h3>How to play</h3><ol>
+      <li>Everyone secretly gets a number from 1 to 100.</li>
+      <li>Describe your number using the theme, without saying it.</li>
+      <li>Drag the face-down cards into order, lowest at the top.</li>
+      <li>When you agree, flip them one by one.</li></ol>`,
+  },
+  pt: {
+    players: 'Jogadores', playerN: n => `Jogador ${n}`, removePlayer: 'Remover jogador', addPlayer: '+ Adicionar jogador',
+    start: 'Começar', howTo: 'Como jogar', menu: 'Menu', language: 'Idioma',
+    another: '↻ Outro', ourOwn: '✎ Criar tema', deal: 'Distribuir',
+    allThemes: 'Todos os temas', seeAll: n => `Ver todos os ${n} temas`, search: 'Buscar tema', back: '← Voltar',
+    passTo: 'Passe o celular para', lookAway: 'Os outros, não olhem',
+    imName: n => `Sou ${n}, mostrar`, gotIt: 'Entendi, esconder',
+    peek: 'Espiar', dragHint: 'Arraste as cartas para ordenar', startFlip: 'Começar a virar', flipNext: 'Virar próxima',
+    perfect: 'Ordem perfeita!', notQuite: n => `${n} fora de ordem`,
+    playAgain: 'Jogar de novo', editPlayers: 'Editar jogadores',
+    customTitle: 'Seu próprio tema', themeLbl: 'Tema', themePh: 'ex: Filmes, pelo quão bons são',
+    oneMeans: '1 significa…', loPh: 'Péssimo', hundredMeans: '100 significa…', hiPh: 'Obra-prima',
+    lowest: 'Mínimo', highest: 'Máximo', cancel: 'Cancelar', useIt: 'Usar',
+    peekTitle: n => `Só ${n} pode olhar`, show: 'Mostrar', hide: 'Esconder',
+    newRound: 'Nova rodada', close: 'Fechar', gotItBtn: 'Entendi',
+    rules: `<h3>Como jogar</h3><ol>
+      <li>Cada um recebe em segredo um número de 1 a 100.</li>
+      <li>Descreva seu número usando o tema, sem dizê-lo.</li>
+      <li>Arrastem as cartas viradas para baixo até a ordem certa, a menor no topo.</li>
+      <li>Quando concordarem, virem uma por uma.</li></ol>`,
+  },
+};
+const T = new Proxy({}, { get: (_, k) => STR[S.lang][k] ?? STR.en[k] });
+
+const KEY = 'lineup-save-v4';
+const MAX_PLAYERS = 20;
+
+const $app = document.getElementById('app');
+const $modal = document.getElementById('modal');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); // accent-insensitive search
+const defaultLang = () => (/^pt/i.test(navigator.language || '') ? 'pt' : 'en');
+
+function fresh() {
+  return {
+    v: 4, lang: defaultLang(), screen: 'setup',
+    players: ['', '', ''],
+    theme: null, usedThemes: [],
+    nums: [], dealIdx: 0, dealShown: false,
+    order: [],        // player indices, top (lowest guess) to bottom
+    phase: 'arrange', // 'arrange' | 'flip' | 'done'
+    flips: 0,         // how many cards from the top are face up
+  };
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 4) { s.dealShown = false; return s; } } catch (e) {}
+  return null;
+}
+let S = load() || fresh();
+let freshFlip = false; // animates the card that was just flipped
+
+// ---------- Game logic ----------
+// S.theme is either { i: index into THEMES } or { custom: { t, lo, hi } }
+function theme() {
+  if (!S.theme) return { t: '', lo: '', hi: '' };
+  if (S.theme.custom) return S.theme.custom;
+  const r = THEMES[S.theme.i], o = S.lang === 'pt' ? 3 : 0;
+  return { t: r[o], lo: r[o + 1], hi: r[o + 2] };
+}
+function pickTheme() {
+  let pool = THEMES.map((_, i) => i).filter(i => !S.usedThemes.includes(i));
+  if (!pool.length) { S.usedThemes = []; pool = THEMES.map((_, i) => i); }
+  const i = pool[Math.floor(Math.random() * pool.length)];
+  S.usedThemes.push(i);
+  S.theme = { i };
+}
+function newRound() {
+  pickTheme();
+  S.nums = shuffle(Array.from({ length: 100 }, (_, i) => i + 1)).slice(0, S.players.length);
+  S.order = S.players.map((_, i) => i);
+  S.phase = 'arrange'; S.flips = 0;
+  S.dealIdx = 0; S.dealShown = false;
+  S.screen = 'theme';
+}
+// The card at position k is out of order when a card above it is higher.
+const badAt = k => S.order.slice(0, k).some(p => S.nums[p] > S.nums[S.order[k]]);
+
+// ---------- Rendering helpers ----------
+const hue = v => Math.round(210 - (v - 1) * (210 / 99));
+const card = (v, size = '', extra = '') => `<div class="card ${size} ${extra} ${v >= 100 ? 'n3' : ''}" style="--h:${hue(v)}">${v}</div>`;
+const back = (size = '') => `<div class="card back ${size}"></div>`;
+const topbar = () => `<div class="topbar"><button class="icon" data-act="menu" aria-label="${T.menu}">☰</button></div>`;
+const scale = th => `<div class="scale"><div class="bar"></div><div class="ends">
+  <div><b>1</b><span>${esc(th.lo)}</span></div>
+  <div class="r"><b>100</b><span>${esc(th.hi)}</span></div></div></div>`;
+const themeMini = () => { const th = theme(); return `<div class="theme-mini"><div class="t">${esc(th.t)}</div>${scale(th)}</div>`; };
+const langSwitch = () => `<div class="lang" role="group" aria-label="${T.language}">
+  <button class="${S.lang === 'en' ? 'on' : ''}" data-act="setLang" data-arg="en">English</button>
+  <button class="${S.lang === 'pt' ? 'on' : ''}" data-act="setLang" data-arg="pt">Português</button></div>`;
+
+// ---------- Screens ----------
+const screens = {
+  setup() {
+    const n = S.players.length;
+    return `
+    <div class="setup-top">${langSwitch()}</div>
+    <header class="brand">
+      <div class="fan">${card(12)}${card(57)}${card(93)}</div>
+      <h1>Line<span>up</span></h1>
+    </header>
+    <section class="panel">
+      <h2>${T.players}</h2>
+      ${S.players.map((name, i) => `<div class="prow">
+        <span class="num">${i + 1}</span>
+        <input class="pname" id="p${i}" data-i="${i}" value="${esc(name)}" placeholder="${T.playerN(i + 1)}" maxlength="14" autocomplete="off" enterkeyhint="next">
+        <button class="icon" data-act="rmPlayer" data-arg="${i}" ${n <= 2 ? 'disabled' : ''} aria-label="${T.removePlayer}">✕</button>
+      </div>`).join('')}
+      ${n < MAX_PLAYERS ? `<button class="ghost" data-act="addPlayer">${T.addPlayer}</button>` : ''}
+    </section>
+    <div class="spacer"></div>
+    <button class="primary big" data-act="start">${T.start}</button>
+    <button class="link" data-act="rules">${T.howTo}</button>`;
+  },
+
+  theme() {
+    const th = theme();
+    return `${topbar()}
+    <div class="spacer"></div>
+    <div class="theme-card">
+      <div class="theme-t">${esc(th.t)}</div>
+      ${scale(th)}
+    </div>
+    <div class="row">
+      <button class="ghost" data-act="reroll">${T.another}</button>
+      <button class="ghost" data-act="customTheme">${T.ourOwn}</button>
+    </div>
+    <button class="link" data-act="listThemes">${T.seeAll(THEMES.length)}</button>
+    <div class="spacer"></div>
+    <button class="primary big" data-act="startDeal">${T.deal}</button>`;
+  },
+
+  themes() {
+    const o = S.lang === 'pt' ? 3 : 0;
+    const cur = S.theme && !S.theme.custom ? S.theme.i : -1;
+    const idx = THEMES.map((_, i) => i).sort((a, b) => THEMES[a][o].localeCompare(THEMES[b][o], S.lang));
+    return `<div class="tl-head">
+      <button class="ghost sm" data-act="backToTheme">${T.back}</button>
+      <h2>${T.allThemes} · ${THEMES.length}</h2>
+    </div>
+    <input class="field" id="tsearch" type="search" placeholder="${T.search}" autocomplete="off">
+    <div class="tlist">${idx.map(i => {
+      const r = THEMES[i];
+      return `<button class="trow ${i === cur ? 'on' : ''}" data-act="chooseTheme" data-arg="${i}" data-q="${esc(norm(r[0] + ' ' + r[3]))}">
+        <b>${esc(r[o])}</b><span>1 · ${esc(r[o + 1])} &nbsp;→&nbsp; 100 · ${esc(r[o + 2])}</span></button>`;
+    }).join('')}</div>`;
+  },
+
+  deal() {
+    const i = S.dealIdx, name = esc(S.players[i]);
+    if (!S.dealShown) {
+      return `${topbar()}
+      <div class="handoff">
+        <p class="muted">${T.passTo}</p>
+        <h1 class="who">${name}</h1>
+        <div class="hand">${back('big')}</div>
+        <p class="muted">${T.lookAway}</p>
+      </div>
+      <button class="primary big" data-act="revealDeal">${T.imName(name)}</button>`;
+    }
+    return `${topbar()}
+    <div class="handoff">
+      <h1 class="who">${name}</h1>
+      <div class="hand">${card(S.nums[i], 'big')}</div>
+      ${themeMini()}
+    </div>
+    <button class="primary big" data-act="hideDeal">${T.gotIt}</button>`;
+  },
+
+  play() {
+    const th = theme(), arranging = S.phase === 'arrange', done = S.phase === 'done';
+    const bad = done ? S.order.filter((_, k) => badAt(k)).length : 0;
+    const rows = S.order.map((p, k) => {
+      const up = k < S.flips, isNext = S.phase === 'flip' && k === S.flips;
+      const fresh = freshFlip && k === S.flips - 1;
+      return `<div class="arow ${fresh ? 'fresh' : ''} ${isNext ? 'next' : ''}" data-p="${p}" ${isNext ? 'data-act="flipNext"' : ''}>
+        <span class="pos">${k + 1}</span>
+        ${up ? card(S.nums[p], 'sm') : back('sm')}
+        <span class="nm">${esc(S.players[p])}</span>
+        ${arranging
+          ? `<button class="ghost sm" data-act="peek" data-arg="${p}">${T.peek}</button><span class="grip" aria-hidden="true">≡</span>`
+          : up ? `<span class="mark ${badAt(k) ? 'no' : 'ok'}">${badAt(k) ? '✗' : '✓'}</span>` : ''}
+      </div>`;
+    }).join('');
+    return `${topbar()}
+    ${done
+      ? `<div class="result"><div class="emoji">${bad ? '🤔' : '🎉'}</div><h1>${bad ? T.notQuite(bad) : T.perfect}</h1>
+         <p class="muted">${esc(th.t)}</p></div>`
+      : themeMini()}
+    ${arranging ? `<p class="hint">${T.dragHint}</p>` : ''}
+    <div class="end-label"><b>1</b>${esc(th.lo)}</div>
+    <div class="lineup ${arranging ? 'arranging' : ''}" id="lineup">${rows}</div>
+    <div class="end-label"><b>100</b>${esc(th.hi)}</div>
+    <div class="spacer"></div>
+    ${arranging ? `<button class="primary big" data-act="startFlip">${T.startFlip}</button>`
+      : done ? `<button class="primary big" data-act="again">${T.playAgain}</button>
+                <button class="ghost" data-act="toSetup">${T.editPlayers}</button>`
+      : `<button class="primary big" data-act="flipNext">${T.flipNext}</button>`}`;
+  },
+};
+
+function render() {
+  document.documentElement.lang = S.lang === 'pt' ? 'pt-BR' : 'en';
+  $app.innerHTML = screens[S.screen]();
+  save();
+}
+
+// ---------- Modals ----------
+function openModal(html, cls = '') {
+  $modal.innerHTML = `<div class="backdrop" data-act="backdrop"><div class="sheet ${cls}">${html}</div></div>`;
+}
+function closeModal() { $modal.innerHTML = ''; }
+
+// ---------- Actions ----------
+const actions = {
+  backdrop(_, el, e) { if (e.target === el && !$modal.querySelector('[data-locked]')) closeModal(); },
+  close: closeModal,
+  rules() { openModal(`${T.rules}<button class="primary big" data-act="close">${T.gotItBtn}</button>`); },
+  setLang(l) {
+    S.lang = l === 'pt' ? 'pt' : 'en';
+    render();
+    if ($modal.innerHTML) actions.menu(); // refresh the open menu in the new language
+  },
+
+  addPlayer() {
+    if (S.players.length >= MAX_PLAYERS) return;
+    S.players.push(''); render();
+    const inputs = $app.querySelectorAll('.pname');
+    inputs[inputs.length - 1]?.focus();
+  },
+  rmPlayer(i) { if (S.players.length > 2) { S.players.splice(+i, 1); render(); } },
+  start() {
+    S.players = S.players.map((n, i) => n.trim() || T.playerN(i + 1));
+    newRound(); render();
+  },
+
+  reroll() { pickTheme(); render(); },
+  listThemes() { S.screen = 'themes'; render(); window.scrollTo(0, 0); },
+  backToTheme() { S.screen = 'theme'; render(); window.scrollTo(0, 0); },
+  chooseTheme(i) {
+    S.theme = { i: +i };
+    if (!S.usedThemes.includes(+i)) S.usedThemes.push(+i);
+    actions.backToTheme();
+  },
+  customTheme() {
+    openModal(`<h3>${T.customTitle}</h3>
+      <label class="f">${T.themeLbl}<input class="field" id="ct" maxlength="80" placeholder="${T.themePh}"></label>
+      <label class="f">${T.oneMeans}<input class="field" id="clo" maxlength="30" placeholder="${T.loPh}"></label>
+      <label class="f">${T.hundredMeans}<input class="field" id="chi" maxlength="30" placeholder="${T.hiPh}"></label>
+      <div class="row"><button class="ghost" data-act="close">${T.cancel}</button><button class="primary" data-act="saveTheme">${T.useIt}</button></div>`);
+    setTimeout(() => document.getElementById('ct')?.focus(), 50);
+  },
+  saveTheme() {
+    const t = document.getElementById('ct').value.trim();
+    if (!t) { document.getElementById('ct').focus(); return; }
+    S.theme = { custom: {
+      t,
+      lo: document.getElementById('clo').value.trim() || T.lowest,
+      hi: document.getElementById('chi').value.trim() || T.highest,
+    } };
+    closeModal(); render();
+  },
+  startDeal() { S.screen = 'deal'; S.dealIdx = 0; S.dealShown = false; render(); },
+  revealDeal() { S.dealShown = true; render(); },
+  hideDeal() {
+    S.dealShown = false; S.dealIdx++;
+    if (S.dealIdx >= S.players.length) S.screen = 'play';
+    render();
+  },
+
+  peek(i) {
+    const name = esc(S.players[i]);
+    openModal(`<h3>${T.peekTitle(name)}</h3>
+      <div class="row"><button class="ghost" data-act="close">${T.cancel}</button><button class="primary" data-act="peekShow" data-arg="${i}">${T.show}</button></div>`, 'center');
+  },
+  peekShow(i) {
+    openModal(`<p class="eyebrow">${esc(S.players[i])}</p>
+      <div class="hand">${card(S.nums[i], 'big')}</div>
+      <button class="primary big" data-act="close">${T.hide}</button>`, 'center');
+  },
+
+  startFlip() { S.phase = 'flip'; S.flips = 0; render(); },
+  flipNext() {
+    if (S.phase !== 'flip') return;
+    S.flips++;
+    if (badAt(S.flips - 1)) { try { navigator.vibrate?.(150); } catch (e) {} }
+    if (S.flips >= S.order.length) S.phase = 'done';
+    freshFlip = true; render(); freshFlip = false;
+  },
+
+  again() { newRound(); render(); },
+  toSetup() { closeModal(); S.screen = 'setup'; render(); },
+
+  menu() {
+    if (S.screen === 'setup') { closeModal(); return; }
+    openModal(`<h3>${T.menu}</h3><div class="stack">
+      ${langSwitch()}
+      <button class="ghost big" data-act="rules">${T.howTo}</button>
+      <button class="ghost big" data-act="newRoundGo">${T.newRound}</button>
+      <button class="ghost big" data-act="toSetup">${T.editPlayers}</button>
+      <button class="primary big" data-act="close">${T.close}</button></div>`);
+  },
+  newRoundGo() { closeModal(); newRound(); render(); },
+};
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const fn = actions[el.dataset.act];
+  if (fn) fn(el.dataset.arg, el, e);
+  if (S.screen !== 'setup') keepAwake();
+});
+document.addEventListener('input', e => {
+  if (e.target.classList.contains('pname')) { S.players[+e.target.dataset.i] = e.target.value; save(); }
+  if (e.target.id === 'tsearch') {
+    const q = norm(e.target.value.trim());
+    $app.querySelectorAll('.trow').forEach(r => { r.hidden = !!q && !r.dataset.q.includes(q); });
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.target.classList.contains('pname')) return;
+  const inputs = [...$app.querySelectorAll('.pname')];
+  const next = inputs[inputs.indexOf(e.target) + 1];
+  if (next) next.focus(); else e.target.blur();
+});
+
+// ---------- Drag to reorder (arrange phase) ----------
+// The dragged row follows the finger; neighbours swap past it at their midpoints.
+let drag = null;
+const mid = el => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
+function renumber(list) { [...list.children].forEach((r, k) => { r.querySelector('.pos').textContent = k + 1; }); }
+document.addEventListener('pointerdown', e => {
+  const row = e.target.closest('.arranging .arow');
+  if (!row || e.target.closest('button') || drag) return;
+  e.preventDefault();
+  drag = { row, list: row.parentNode, id: e.pointerId, grabY: e.clientY - mid(row) };
+  row.classList.add('lifted');
+  try { row.setPointerCapture(e.pointerId); } catch (err) {}
+});
+document.addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const { row, list } = drag;
+  const y = e.clientY - drag.grabY; // where the row's centre should be
+  let n;
+  while ((n = row.nextElementSibling) && y > mid(n)) list.insertBefore(n, row);
+  while ((n = row.previousElementSibling) && y < mid(n)) list.insertBefore(n, row.nextElementSibling);
+  row.style.transform = '';
+  row.style.transform = `translateY(${y - mid(row)}px)`;
+  renumber(list);
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const { row, list } = drag;
+  drag = null;
+  row.classList.remove('lifted');
+  row.style.transform = '';
+  S.order = [...list.children].map(r => +r.dataset.p);
+  save();
+}
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+
+// Keep the screen on during a game
+let wakeLock = null;
+async function keepAwake() {
+  try {
+    if ('wakeLock' in navigator && !wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && S.screen !== 'setup') keepAwake();
+});
+
+render();
+</script>
+</body>
+</html>
